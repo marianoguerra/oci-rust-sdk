@@ -22,7 +22,7 @@ pub enum Error {
     #[error("Header type mismatch: {0}")]
     HeaderTypeMismatch(String),
     #[error("Signer error: {0}")]
-    SignerError(#[from] ErrorStack),
+    Signing(#[from] ErrorStack),
 }
 
 pub fn oci_signer(

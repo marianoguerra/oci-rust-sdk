@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use reqwest::{header::HeaderMap, Response};
+use reqwest::{Response, header::HeaderMap};
 
 use crate::{base_client::oci_signer, config::AuthConfig};
 
@@ -66,7 +66,7 @@ impl Identity {
             String::from("get"),
             &path,
             &self.service_endpoint,
-        );
+        )?;
 
         let response = client
             .get(format!("{}{}", self.service_endpoint, path))
@@ -99,7 +99,7 @@ impl Identity {
             String::from("get"),
             &path,
             &self.service_endpoint,
-        );
+        )?;
 
         let response = client
             .get(format!("{}{}", self.service_endpoint, path))
@@ -132,7 +132,7 @@ impl Identity {
             String::from("get"),
             &path,
             &self.service_endpoint,
-        );
+        )?;
 
         let response = client
             .get(format!("{}{}", self.service_endpoint, path))

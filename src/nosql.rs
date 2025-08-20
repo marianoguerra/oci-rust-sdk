@@ -1,8 +1,8 @@
 use crate::base_client::{encode_body, oci_signer};
 use crate::config::AuthConfig;
 use chrono::{DateTime, Utc};
-use reqwest::header::HeaderMap;
 use reqwest::Response;
+use reqwest::header::HeaderMap;
 use serde_json::json;
 
 pub struct QueryDetails {
@@ -106,7 +106,7 @@ impl Nosql {
             String::from("post"),
             &path,
             &self.service_endpoint,
-        );
+        )?;
 
         let response = client
             .post(format!("{}{}", self.service_endpoint, path))
@@ -154,7 +154,7 @@ impl Nosql {
             String::from("post"),
             &path,
             &self.service_endpoint,
-        );
+        )?;
 
         let response = client
             .post(format!("{}{}", self.service_endpoint, path))

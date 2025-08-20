@@ -36,27 +36,24 @@ impl AuthConfig {
     }
 
     pub fn from_file(file_path: Option<String>, profile_name: Option<String>) -> AuthConfig {
-        let fp;
         let pn = profile_name.unwrap_or("DEFAULT".to_string());
 
-        if file_path.is_none() {
+        let fp = if let Some(path) = file_path {
+            path
+        } else {
             let home_dir_path = home::home_dir().expect("Impossible to get your home dir!");
 
-            fp = format!(
+            format!(
                 "{}/.oci/config",
                 home_dir_path.to_str().expect("null value")
-            );
-        } else {
-            fp = file_path.expect("file path is not string");
-        }
+            )
+        };
 
-        let config_content =
-            fs::read_to_string(&fp).unwrap_or_else(|_| panic!("config file '{}' doest not exists", fp));
+        let config_content = fs::read_to_string(&fp)
+            .unwrap_or_else(|_| panic!("config file '{}' doest not exists", fp));
 
         let mut config = Ini::new();
-        config
-            .read(config_content)
-            .expect("invalid config file");
+        config.read(config_content).expect("invalid config file");
 
         AuthConfig::new(
             config.get(&pn, "user").unwrap(),
