@@ -23,3 +23,4 @@ rsa = { version = "0.9.8", features = ["sha2"] }
 signature = "2.2.0"
 pkcs8 = { version = "0.10.2", features = ["pem", "encryption", "pkcs5"] }
 rand = "0.8"
+expanduser = "1.2.2"
