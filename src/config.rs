@@ -1,3 +1,4 @@
+use crate::{Error, Result};
 use configparser::ini::Ini;
 use openssl::pkey::{PKey, Private};
 use openssl::rsa::Rsa;
@@ -19,48 +20,64 @@ impl AuthConfig {
         tenancy: String,
         region: String,
         passphrase: String,
-    ) -> AuthConfig {
-        let key = fs::read_to_string(&key_file).expect("key_file doest not exists");
+    ) -> Result<AuthConfig> {
+        let key =
+            fs::read_to_string(&key_file).map_err(|_| Error::FileNotFound(key_file.clone()))?;
 
-        let keypair =
-            Rsa::private_key_from_pem_passphrase(key.as_bytes(), passphrase.as_bytes()).unwrap();
-        let keypair = PKey::from_rsa(keypair).unwrap();
+        let keypair = Rsa::private_key_from_pem_passphrase(key.as_bytes(), passphrase.as_bytes())
+            .map_err(Error::Signing)?;
+        let keypair = PKey::from_rsa(keypair).map_err(Error::Signing)?;
 
-        AuthConfig {
+        Ok(AuthConfig {
             user,
             fingerprint,
             tenancy,
             region,
             keypair,
-        }
+        })
     }
 
-    pub fn from_file(file_path: Option<String>, profile_name: Option<String>) -> AuthConfig {
+    pub fn from_file(
+        file_path: Option<String>,
+        profile_name: Option<String>,
+    ) -> Result<AuthConfig> {
         let pn = profile_name.unwrap_or("DEFAULT".to_string());
 
         let fp = if let Some(path) = file_path {
             path
         } else {
-            let home_dir_path = home::home_dir().expect("Impossible to get your home dir!");
+            let home_dir_path = home::home_dir().ok_or(Error::BadHomeDir)?;
 
             format!(
                 "{}/.oci/config",
-                home_dir_path.to_str().expect("null value")
+                home_dir_path.to_str().ok_or(Error::BadHomeDir)?
             )
         };
 
-        let config_content = fs::read_to_string(&fp)
-            .unwrap_or_else(|_| panic!("config file '{}' doest not exists", fp));
+        let config_content =
+            fs::read_to_string(&fp).map_err(|_| Error::FileNotFound(fp.clone()))?;
 
         let mut config = Ini::new();
-        config.read(config_content).expect("invalid config file");
+        config
+            .read(config_content)
+            .map_err(|_| Error::BadConfigFile(fp.clone()))?;
 
         AuthConfig::new(
-            config.get(&pn, "user").unwrap(),
-            config.get(&pn, "key_file").unwrap(),
-            config.get(&pn, "fingerprint").unwrap(),
-            config.get(&pn, "tenancy").unwrap(),
-            config.get(&pn, "region").unwrap(),
+            config
+                .get(&pn, "user")
+                .ok_or_else(|| Error::ConfigFieldNotFound("user".to_string()))?,
+            config
+                .get(&pn, "key_file")
+                .ok_or_else(|| Error::ConfigFieldNotFound("key_file".to_string()))?,
+            config
+                .get(&pn, "fingerprint")
+                .ok_or_else(|| Error::ConfigFieldNotFound("fingerprint".to_string()))?,
+            config
+                .get(&pn, "tenancy")
+                .ok_or_else(|| Error::ConfigFieldNotFound("tenancy".to_string()))?,
+            config
+                .get(&pn, "region")
+                .ok_or_else(|| Error::ConfigFieldNotFound("region".to_string()))?,
             config.get(&pn, "passphrase").unwrap_or("".to_string()),
         )
     }

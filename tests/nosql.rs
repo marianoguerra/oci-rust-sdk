@@ -6,8 +6,8 @@ mod tests {
     };
 
     #[tokio::test]
-    async fn nosql() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let auth_config = AuthConfig::from_file(Some("tests/assets/oci_config".to_string()), None);
+    async fn nosql() -> Result<(), oci_sdk::Error> {
+        let auth_config = AuthConfig::from_file(Some("tests/assets/oci_config".to_string()), None)?;
         let nosql = Nosql::new(auth_config, Some("http://localhost:12000".to_string()));
 
         let table_limits = TableLimits {
@@ -19,7 +19,9 @@ mod tests {
         let create_table_details = CreateTableDetails {
             name: String::from("table_name"),
             compartment_id: String::from("ocid1.compartment.oc1..randomcompartment"),
-            ddl_statement: String::from("CREATE TABLE table_name ( stream_name string, start number, finish number, shot_source string DEFAULT \"IMAGE_SERVER\" NOT NULL, video_source string DEFAULT \"OCI\" NOT NULL, PRIMARY KEY ( SHARD ( stream_name ), start ) )"),
+            ddl_statement: String::from(
+                "CREATE TABLE table_name ( stream_name string, start number, finish number, shot_source string DEFAULT \"IMAGE_SERVER\" NOT NULL, video_source string DEFAULT \"OCI\" NOT NULL, PRIMARY KEY ( SHARD ( stream_name ), start ) )",
+            ),
             table_limits,
         };
 

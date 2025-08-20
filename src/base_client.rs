@@ -1,11 +1,10 @@
+use crate::config::AuthConfig;
+use crate::{Error, Result};
 use base64::prelude::*;
+use openssl::hash::MessageDigest;
 use openssl::sign::Signer;
-use openssl::{error::ErrorStack, hash::MessageDigest};
 use reqwest::header::HeaderMap;
 use sha2::{Digest, Sha256};
-use thiserror::Error;
-
-use crate::config::AuthConfig;
 
 pub fn encode_body(body: &str) -> String {
     let mut hasher = Sha256::new();
@@ -15,23 +14,13 @@ pub fn encode_body(body: &str) -> String {
     BASE64_STANDARD.encode(result)
 }
 
-#[derive(Error, Debug)]
-pub enum Error {
-    #[error("Header not found: {0}")]
-    HeaderNotFound(String),
-    #[error("Header type mismatch: {0}")]
-    HeaderTypeMismatch(String),
-    #[error("Signer error: {0}")]
-    Signing(#[from] ErrorStack),
-}
-
 pub fn oci_signer(
     config: &AuthConfig,
     headers: &mut HeaderMap,
     method: String,
     path: &str,
     host: &str,
-) -> Result<(), Error> {
+) -> Result<()> {
     let date = headers
         .get("date")
         .ok_or_else(|| Error::HeaderNotFound("date".to_string()))?;

@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use reqwest::{Response, header::HeaderMap};
 
-use crate::{base_client::oci_signer, config::AuthConfig};
+use crate::{Error, Result, base_client::oci_signer, config::AuthConfig};
 
 pub struct Identity {
     config: AuthConfig,
@@ -18,7 +18,7 @@ impl Identity {
     ///    identity::{Identity},
     ///};
     ///
-    ///let auth_config = AuthConfig::from_file(None, None);
+    ///let auth_config = AuthConfig::from_file(None, None).unwrap();
     ///let identity = Identity::new(auth_config, None);
     ///```
     ///
@@ -30,10 +30,10 @@ impl Identity {
     ///    identity::{Identity},
     ///};
     ///
-    ///let auth_config = AuthConfig::from_file(Some("tests/assets/oci_config".to_string()), Some("DEFAULT".to_string()));
+    ///let auth_config = AuthConfig::from_file(Some("tests/assets/oci_config".to_string()), Some("DEFAULT".to_string())).unwrap();
     ///let identity = Identity::new(auth_config, None);
     ///```
-    ///Returns the Nosql client.
+    ///Returns the Identity client.
     pub fn new(config: AuthConfig, service_endpoint: Option<String>) -> Identity {
         let se = service_endpoint.unwrap_or(format!(
             "https://identity.{}.oci.oraclecloud.com",
@@ -45,9 +45,7 @@ impl Identity {
         }
     }
 
-    pub async fn get_current_user(
-        &self,
-    ) -> Result<Response, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_current_user(&self) -> Result<Response> {
         let client = reqwest::Client::new();
 
         let mut headers = HeaderMap::new();
@@ -55,7 +53,10 @@ impl Identity {
         let now: DateTime<Utc> = Utc::now();
         headers.insert(
             "date",
-            now.to_rfc2822().replace("+0000", "GMT").parse().unwrap(),
+            now.to_rfc2822()
+                .replace("+0000", "GMT")
+                .parse()
+                .map_err(|e| Error::InvalidHeaderValueFormat(format!("date: {}", e)))?,
         );
 
         let path = format!("/20160918/users/{}", self.config.user);
@@ -77,10 +78,7 @@ impl Identity {
         Ok(response)
     }
 
-    pub async fn get_user(
-        &self,
-        user_ocid: String,
-    ) -> Result<Response, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_user(&self, user_ocid: String) -> Result<Response> {
         let client = reqwest::Client::new();
 
         let mut headers = HeaderMap::new();
@@ -88,7 +86,10 @@ impl Identity {
         let now: DateTime<Utc> = Utc::now();
         headers.insert(
             "date",
-            now.to_rfc2822().replace("+0000", "GMT").parse().unwrap(),
+            now.to_rfc2822()
+                .replace("+0000", "GMT")
+                .parse()
+                .map_err(|e| Error::InvalidHeaderValueFormat(format!("date: {}", e)))?,
         );
 
         let path = format!("/20160918/users/{}", user_ocid);
@@ -110,10 +111,7 @@ impl Identity {
         Ok(response)
     }
 
-    pub async fn list_users(
-        &self,
-        compartment_id: String,
-    ) -> Result<Response, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn list_users(&self, compartment_id: String) -> Result<Response> {
         let client = reqwest::Client::new();
 
         let mut headers = HeaderMap::new();
@@ -121,7 +119,10 @@ impl Identity {
         let now: DateTime<Utc> = Utc::now();
         headers.insert(
             "date",
-            now.to_rfc2822().replace("+0000", "GMT").parse().unwrap(),
+            now.to_rfc2822()
+                .replace("+0000", "GMT")
+                .parse()
+                .map_err(|e| Error::InvalidHeaderValueFormat(format!("date: {}", e)))?,
         );
 
         let path = format!("/20160918/users?compartmentId={}", compartment_id);

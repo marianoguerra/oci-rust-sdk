@@ -1,5 +1,8 @@
-use crate::base_client::{encode_body, oci_signer};
-use crate::config::AuthConfig;
+use crate::{
+    Error, Result,
+    base_client::{encode_body, oci_signer},
+    config::AuthConfig,
+};
 use chrono::{DateTime, Utc};
 use reqwest::Response;
 use reqwest::header::HeaderMap;
@@ -38,7 +41,7 @@ impl Nosql {
     ///    nosql::{Nosql},
     ///};
     ///
-    ///let auth_config = AuthConfig::from_file(None, None);
+    ///let auth_config = AuthConfig::from_file(None, None).unwrap();
     ///let nosql = Nosql::new(auth_config, None);
     ///```
     ///
@@ -50,7 +53,7 @@ impl Nosql {
     ///    nosql::{Nosql},
     ///};
     ///
-    ///let auth_config = AuthConfig::from_file(Some("tests/assets/oci_config".to_string()), Some("DEFAULT".to_string()));
+    ///let auth_config = AuthConfig::from_file(Some("tests/assets/oci_config".to_string()), Some("DEFAULT".to_string())).unwrap();
     ///let nosql = Nosql::new(auth_config, None);
     ///```
     ///Returns the Nosql client.
@@ -65,10 +68,7 @@ impl Nosql {
         }
     }
 
-    pub async fn create_table(
-        &self,
-        create_table_detais: CreateTableDetails,
-    ) -> Result<Response, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn create_table(&self, create_table_detais: CreateTableDetails) -> Result<Response> {
         let client = reqwest::Client::new();
 
         let mut headers = HeaderMap::new();
@@ -89,13 +89,29 @@ impl Nosql {
         let now: DateTime<Utc> = Utc::now();
         headers.insert(
             "date",
-            now.to_rfc2822().replace("+0000", "GMT").parse().unwrap(),
+            now.to_rfc2822()
+                .replace("+0000", "GMT")
+                .parse()
+                .map_err(|e| Error::InvalidHeaderValueFormat(format!("date: {}", e)))?,
         );
-        headers.insert("x-content-sha256", encode_body(&body).parse().unwrap());
-        headers.insert("content-length", body.len().to_string().parse().unwrap());
+        headers.insert(
+            "x-content-sha256",
+            encode_body(&body)
+                .parse()
+                .map_err(|e| Error::InvalidHeaderValueFormat(format!("x-content-sha256: {}", e)))?,
+        );
+        headers.insert(
+            "content-length",
+            body.len()
+                .to_string()
+                .parse()
+                .map_err(|e| Error::InvalidHeaderValueFormat(format!("content-length: {}", e)))?,
+        );
         headers.insert(
             "content-type",
-            String::from("application/json").parse().unwrap(),
+            String::from("application/json")
+                .parse()
+                .map_err(|e| Error::InvalidHeaderValueFormat(format!("content-type: {}", e)))?,
         );
 
         let path = "/20190828/tables".to_string();
@@ -118,11 +134,7 @@ impl Nosql {
         Ok(response)
     }
 
-    pub async fn query(
-        &self,
-        query_details: QueryDetails,
-        limit: u16,
-    ) -> Result<Response, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn query(&self, query_details: QueryDetails, limit: u16) -> Result<Response> {
         let client = reqwest::Client::new();
 
         let mut headers = HeaderMap::new();
@@ -137,13 +149,29 @@ impl Nosql {
         let now: DateTime<Utc> = Utc::now();
         headers.insert(
             "date",
-            now.to_rfc2822().replace("+0000", "GMT").parse().unwrap(),
+            now.to_rfc2822()
+                .replace("+0000", "GMT")
+                .parse()
+                .map_err(|e| Error::InvalidHeaderValueFormat(format!("date: {}", e)))?,
         );
-        headers.insert("x-content-sha256", encode_body(&body).parse().unwrap());
-        headers.insert("content-length", body.len().to_string().parse().unwrap());
+        headers.insert(
+            "x-content-sha256",
+            encode_body(&body)
+                .parse()
+                .map_err(|e| Error::InvalidHeaderValueFormat(format!("x-content-sha256: {}", e)))?,
+        );
+        headers.insert(
+            "content-length",
+            body.len()
+                .to_string()
+                .parse()
+                .map_err(|e| Error::InvalidHeaderValueFormat(format!("content-length: {}", e)))?,
+        );
         headers.insert(
             "content-type",
-            String::from("application/json").parse().unwrap(),
+            String::from("application/json")
+                .parse()
+                .map_err(|e| Error::InvalidHeaderValueFormat(format!("content-type: {}", e)))?,
         );
 
         let path = format!("/20190828/query?limit={}", limit);

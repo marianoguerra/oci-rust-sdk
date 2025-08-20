@@ -3,8 +3,8 @@ mod tests {
     use oci_sdk::{config::AuthConfig, identity::Identity};
 
     #[tokio::test]
-    async fn get_current_user() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let auth_config = AuthConfig::from_file(Some("tests/assets/oci_config".to_string()), None);
+    async fn get_current_user() -> Result<(), oci_sdk::Error> {
+        let auth_config = AuthConfig::from_file(Some("tests/assets/oci_config".to_string()), None)?;
         let identity = Identity::new(auth_config, Some("http://localhost:12000".to_string()));
 
         let response = identity.get_current_user().await?;
@@ -16,8 +16,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn get_user() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let auth_config = AuthConfig::from_file(Some("tests/assets/oci_config".to_string()), None);
+    async fn get_user() -> Result<(), oci_sdk::Error> {
+        let auth_config = AuthConfig::from_file(Some("tests/assets/oci_config".to_string()), None)?;
         let identity = Identity::new(auth_config, Some("http://localhost:12000".to_string()));
 
         let response = identity
@@ -34,8 +34,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn list_users() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let auth_config = AuthConfig::from_file(Some("tests/assets/oci_config".to_string()), None);
+    async fn list_users() -> Result<(), oci_sdk::Error> {
+        let auth_config = AuthConfig::from_file(Some("tests/assets/oci_config".to_string()), None)?;
         let identity = Identity::new(auth_config, Some("http://localhost:12000".to_string()));
 
         let response = identity
