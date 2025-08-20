@@ -1,3 +1,4 @@
+use base64::prelude::*;
 use openssl::hash::MessageDigest;
 use openssl::sign::Signer;
 use reqwest::header::HeaderMap;
@@ -9,7 +10,7 @@ pub fn encode_body(body: &String) -> String {
     let mut hasher = Sha256::new();
     hasher.update(body);
     let result = hasher.finalize();
-    let b64 = base64::encode(result);
+    let b64 = BASE64_STANDARD.encode(result);
     return b64;
 }
 
@@ -56,9 +57,12 @@ pub fn oci_signer(
     let mut signer = Signer::new(MessageDigest::sha256(), &config.keypair).unwrap();
     signer.update(data.as_bytes()).unwrap();
     let signature = signer.sign_to_vec().unwrap();
-    let b64 = base64::encode(signature);
+    let b64 = BASE64_STANDARD.encode(signature);
     let key_id = format!("{}/{}/{}", config.tenancy, config.user, config.fingerprint);
-    let authorization = format!("Signature algorithm=\"rsa-sha256\",headers=\"{}\",keyId=\"{}\",signature=\"{}\",version=\"1\"",headers_auth,key_id,b64);
+    let authorization = format!(
+        "Signature algorithm=\"rsa-sha256\",headers=\"{}\",keyId=\"{}\",signature=\"{}\",version=\"1\"",
+        headers_auth, key_id, b64
+    );
 
     headers.insert("authorization", authorization.parse().unwrap());
 }
