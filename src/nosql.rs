@@ -59,10 +59,10 @@ impl Nosql {
             "https://nosql.{}.oci.oraclecloud.com",
             config.region
         ));
-        return Nosql {
+        Nosql {
             config,
             service_endpoint: se,
-        };
+        }
     }
 
     pub async fn create_table(
@@ -98,7 +98,7 @@ impl Nosql {
             String::from("application/json").parse().unwrap(),
         );
 
-        let path = format!("/20190828/tables");
+        let path = "/20190828/tables".to_string();
 
         oci_signer(
             &self.config,
@@ -115,7 +115,7 @@ impl Nosql {
             .send()
             .await?;
 
-        return Ok(response);
+        Ok(response)
     }
 
     pub async fn query(
@@ -163,6 +163,6 @@ impl Nosql {
             .send()
             .await?;
 
-        return Ok(response);
+        Ok(response)
     }
 }

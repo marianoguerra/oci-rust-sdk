@@ -39,10 +39,10 @@ impl Identity {
             "https://identity.{}.oci.oraclecloud.com",
             config.region
         ));
-        return Identity {
+        Identity {
             config,
             service_endpoint: se,
-        };
+        }
     }
 
     pub async fn get_current_user(
@@ -74,7 +74,7 @@ impl Identity {
             .send()
             .await?;
 
-        return Ok(response);
+        Ok(response)
     }
 
     pub async fn get_user(
@@ -107,7 +107,7 @@ impl Identity {
             .send()
             .await?;
 
-        return Ok(response);
+        Ok(response)
     }
 
     pub async fn list_users(
@@ -141,6 +141,6 @@ impl Identity {
             .send()
             .await?;
 
-        return Ok(response);
+        Ok(response)
     }
 }

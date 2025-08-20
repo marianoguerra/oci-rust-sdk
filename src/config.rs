@@ -26,13 +26,13 @@ impl AuthConfig {
             Rsa::private_key_from_pem_passphrase(key.as_bytes(), passphrase.as_bytes()).unwrap();
         let keypair = PKey::from_rsa(keypair).unwrap();
 
-        return AuthConfig {
+        AuthConfig {
             user,
             fingerprint,
             tenancy,
             region,
             keypair,
-        };
+        }
     }
 
     pub fn from_file(file_path: Option<String>, profile_name: Option<String>) -> AuthConfig {
@@ -51,20 +51,20 @@ impl AuthConfig {
         }
 
         let config_content =
-            fs::read_to_string(&fp).expect(&format!("config file '{}' doest not exists", fp));
+            fs::read_to_string(&fp).unwrap_or_else(|_| panic!("config file '{}' doest not exists", fp));
 
         let mut config = Ini::new();
         config
-            .read(String::from(config_content))
+            .read(config_content)
             .expect("invalid config file");
 
-        return AuthConfig::new(
+        AuthConfig::new(
             config.get(&pn, "user").unwrap(),
             config.get(&pn, "key_file").unwrap(),
             config.get(&pn, "fingerprint").unwrap(),
             config.get(&pn, "tenancy").unwrap(),
             config.get(&pn, "region").unwrap(),
             config.get(&pn, "passphrase").unwrap_or("".to_string()),
-        );
+        )
     }
 }

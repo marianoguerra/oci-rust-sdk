@@ -11,7 +11,7 @@ pub fn encode_body(body: &String) -> String {
     hasher.update(body);
     let result = hasher.finalize();
     let b64 = BASE64_STANDARD.encode(result);
-    return b64;
+    b64
 }
 
 pub fn oci_signer(
