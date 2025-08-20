@@ -1,10 +1,11 @@
 use crate::config::AuthConfig;
 use crate::{Error, Result};
 use base64::prelude::*;
-use openssl::hash::MessageDigest;
-use openssl::sign::Signer;
 use reqwest::header::HeaderMap;
+use rsa::pkcs1v15::{Signature, SigningKey};
+use rsa::signature::RandomizedSigner;
 use sha2::{Digest, Sha256};
+use signature::SignatureEncoding;
 
 pub fn encode_body(body: &str) -> String {
     let mut hasher = Sha256::new();
@@ -70,10 +71,10 @@ pub fn oci_signer(
         headers_auth = format!("{} x-content-sha256", headers_auth);
     }
 
-    let mut signer = Signer::new(MessageDigest::sha256(), &config.keypair)?;
-    signer.update(data.as_bytes())?;
-    let signature = signer.sign_to_vec()?;
-    let b64 = BASE64_STANDARD.encode(signature);
+    let signing_key = SigningKey::<Sha256>::new(config.keypair.clone());
+    let mut rng = rand::thread_rng();
+    let signature: Signature = signing_key.sign_with_rng(&mut rng, data.as_bytes());
+    let b64 = BASE64_STANDARD.encode(signature.to_bytes().as_ref());
     let key_id = format!("{}/{}/{}", config.tenancy, config.user, config.fingerprint);
     let authorization = format!(
         "Signature algorithm=\"rsa-sha256\",headers=\"{}\",keyId=\"{}\",signature=\"{}\",version=\"1\"",

@@ -1,7 +1,8 @@
 use crate::{Error, Result};
 use configparser::ini::Ini;
-use openssl::pkey::{PKey, Private};
-use openssl::rsa::Rsa;
+use pkcs8::DecodePrivateKey;
+use rsa::RsaPrivateKey;
+use rsa::pkcs1::DecodeRsaPrivateKey;
 use std::fs;
 
 pub struct AuthConfig {
@@ -9,7 +10,7 @@ pub struct AuthConfig {
     pub fingerprint: String,
     pub tenancy: String,
     pub region: String,
-    pub keypair: PKey<Private>,
+    pub keypair: RsaPrivateKey,
 }
 
 impl AuthConfig {
@@ -24,9 +25,21 @@ impl AuthConfig {
         let key =
             fs::read_to_string(&key_file).map_err(|_| Error::FileNotFound(key_file.clone()))?;
 
-        let keypair = Rsa::private_key_from_pem_passphrase(key.as_bytes(), passphrase.as_bytes())
-            .map_err(Error::Signing)?;
-        let keypair = PKey::from_rsa(keypair).map_err(Error::Signing)?;
+        let keypair = if passphrase.is_empty() {
+            // No passphrase - try PKCS#8 first, then PKCS#1
+            if let Ok(key) = RsaPrivateKey::from_pkcs8_pem(&key) {
+                key
+            } else {
+                RsaPrivateKey::from_pkcs1_pem(&key).map_err(Error::Pkcs1)?
+            }
+        } else {
+            // With passphrase - try encrypted PKCS#8 first, then PKCS#1
+            if let Ok(key) = RsaPrivateKey::from_pkcs8_encrypted_pem(&key, passphrase.as_bytes()) {
+                key
+            } else {
+                RsaPrivateKey::from_pkcs1_pem(&key).map_err(Error::Pkcs1)?
+            }
+        };
 
         Ok(AuthConfig {
             user,

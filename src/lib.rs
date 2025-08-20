@@ -12,8 +12,16 @@ pub enum Error {
     HeaderNotFound(String),
     #[error("Header type mismatch: {0}")]
     HeaderTypeMismatch(String),
-    #[error("Signer error: {0}")]
-    Signing(#[from] openssl::error::ErrorStack),
+    #[error("RSA signing error: {0}")]
+    RsaSigning(#[from] rsa::Error),
+    #[error("PKCS8 error: {0}")]
+    Pkcs8(#[from] pkcs8::Error),
+    #[error("PKCS1 error: {0}")]
+    Pkcs1(#[from] rsa::pkcs1::Error),
+    #[error("Signature error: {0}")]
+    Signature(#[from] signature::Error),
+    #[error("Key parsing error")]
+    KeyParsing,
 
     // Config errors
     #[error("File not found: {0}")]
