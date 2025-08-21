@@ -82,49 +82,42 @@ impl AuthConfig {
     }
 
     pub fn from_file(
-        file_path: Option<String>,
-        profile_name: Option<String>,
+        config_path: Option<String>,
+        provided_profile_name: Option<String>,
     ) -> Result<AuthConfig> {
-        let pn = profile_name.unwrap_or("DEFAULT".to_string());
-
-        let fp = if let Some(path) = file_path {
-            expand_tilde_in_path(&path)
-        } else {
-            let home_dir_path = home::home_dir().ok_or(Error::BadHomeDir)?;
-
-            format!(
-                "{}/.oci/config",
-                home_dir_path.to_str().ok_or(Error::BadHomeDir)?
-            )
-        };
+        let profile_name = provided_profile_name.unwrap_or("DEFAULT".to_string());
+        let file_path =
+            expand_tilde_in_path(&config_path.unwrap_or_else(|| "~/.oci/config".to_string()));
 
         let config_content =
-            fs::read_to_string(&fp).map_err(|_| Error::FileNotFound(fp.clone()))?;
+            fs::read_to_string(&file_path).map_err(|_| Error::FileNotFound(file_path.clone()))?;
 
         let mut config = Ini::new();
         config
             .read(config_content)
-            .map_err(|_| Error::BadConfigFile(fp.clone()))?;
+            .map_err(|_| Error::BadConfigFile(file_path.clone()))?;
 
         let key_file = config
-            .get(&pn, "key_file")
+            .get(&profile_name, "key_file")
             .ok_or_else(|| Error::ConfigFieldNotFound("key_file".to_string()))?;
 
         AuthConfig::new(
             config
-                .get(&pn, "user")
+                .get(&profile_name, "user")
                 .ok_or_else(|| Error::ConfigFieldNotFound("user".to_string()))?,
             expand_tilde_in_path(&key_file),
             config
-                .get(&pn, "fingerprint")
+                .get(&profile_name, "fingerprint")
                 .ok_or_else(|| Error::ConfigFieldNotFound("fingerprint".to_string()))?,
             config
-                .get(&pn, "tenancy")
+                .get(&profile_name, "tenancy")
                 .ok_or_else(|| Error::ConfigFieldNotFound("tenancy".to_string()))?,
             config
-                .get(&pn, "region")
+                .get(&profile_name, "region")
                 .ok_or_else(|| Error::ConfigFieldNotFound("region".to_string()))?,
-            config.get(&pn, "passphrase").unwrap_or("".to_string()),
+            config
+                .get(&profile_name, "passphrase")
+                .unwrap_or("".to_string()),
         )
     }
 }

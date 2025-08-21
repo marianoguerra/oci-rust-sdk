@@ -1,4 +1,4 @@
-mod base_client;
+pub mod base_client;
 pub mod config;
 pub mod identity;
 pub mod nosql;
@@ -26,8 +26,6 @@ pub enum Error {
     // Config errors
     #[error("File not found: {0}")]
     FileNotFound(String),
-    #[error("Bad home dir")]
-    BadHomeDir,
     #[error("Bad config file: {0}")]
     BadConfigFile(String),
     #[error("Config field not found: {0}")]
